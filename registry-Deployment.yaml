@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-data-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: registry
+  labels:
+    app: registry
+spec:
+  containers:
+    - name: registry
+      image: registry:latest
+      volumeMounts:
+        - name: data-volume
+          mountPath: /var/lib/registry
+      ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+    - name: sh
+      image: busybox
+      command:
+        - "/bin/sh"
+        - "-c"
+        - "--"
+      args:
+        - "while true; do sleep 30; done;"
+      volumeMounts:
+        - name: data-volume
+          mountPath: /data  
+  volumes:
+    - name: data-volume
+      persistentVolumeClaim:
+        claimName: registry-data-pv-claim
+  restartPolicy: Always
+
